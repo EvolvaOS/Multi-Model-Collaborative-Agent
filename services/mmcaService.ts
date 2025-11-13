@@ -1,4 +1,4 @@
-import { type Memory } from '../types';
+import { type Memory, type Attachment } from '../types';
 
 const mockMemories: Memory[] = [
   {
@@ -24,23 +24,34 @@ const mockMemories: Memory[] = [
   },
 ];
 
-// Reverted to a mock function to avoid browser-side errors with process.env and API keys.
-// The actual API call should be handled by a secure backend proxy.
-export const getAgentResponse = async (prompt: string, memories: Memory[]): Promise<string> => {
-    console.log("Simulating agent response for prompt:", prompt, "with memories:", memories);
+export const getAgentResponse = async (
+  prompt: string, 
+  memories: Memory[], 
+  attachment?: Attachment | null
+): Promise<string> => {
+    console.log("Simulating agent response for prompt:", prompt, "with memories:", memories, "and attachment:", attachment);
 
-    // Check for memory citation to provide a more dynamic mock response
     const citationRegex = /\[正在引用記憶：「([^」]+)」\]/g;
-    const match = citationRegex.exec(prompt);
+    const citationMatch = citationRegex.exec(prompt);
     let responseContent: string;
 
-    if (match) {
-        const memoryTitle = match[1];
-        responseContent = `[A] 已收到您對記憶「${memoryTitle}」的引用。該內容已被整合到本次回應的上下文中。
-[B] 所引用的記憶有效，且與當前查詢相關。
-[C] 補充說明，整合過去的對話能讓交流更連貫、更具情境感知能力。
-[Agent] 根據您的查詢以及所引用的記憶「${memoryTitle}」，這是在整合該知識後的回應。`;
-    } else {
+    const attachmentText = attachment 
+        ? `以及您上傳的檔案「${attachment.name}」` 
+        : '';
+    
+    if (citationMatch) {
+        const memoryTitle = citationMatch[1];
+        responseContent = `[A] 已收到您對記憶「${memoryTitle}」的引用${attachmentText}。這些內容已被整合到本次回應的上下文中。
+[B] 所引用的記憶有效，檔案也已成功識別。
+[C] 補充說明，整合過去的對話與附件能讓交流更連貫、更具情境感知能力。
+[Agent] 根據您的查詢、引用的記憶「${memoryTitle}」${attachmentText}，這是在整合所有資訊後的回應。`;
+    } else if (attachment) {
+         responseContent = `[A] 已收到您的查詢「${prompt}」${attachmentText}。
+[B] 檔案「${attachment.name}」已成功讀取，內容有效。
+[C] 結合檔案內容可以為您的問題提供更豐富的解答。
+[Agent] 針對您的問題與附件「${attachment.name}」，這是我為您生成的綜合回應。`;
+    }
+    else {
         responseContent = `[A] 根據您的查詢「${prompt}」，初步評估這是一個有效且有趣的問題。
 [B] 事實核查完畢。查詢的前提是合理的，沒有明顯矛盾。
 [C] 為了提供更多背景資訊，通常可以考慮此主題與更廣泛的行業趨勢和未來可能性的關聯。

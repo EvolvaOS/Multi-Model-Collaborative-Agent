@@ -1,7 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { type Message } from '../types';
+import { type Message, type Attachment } from '../types';
 import { MessageComponent } from './Message';
 import { MessageInput } from './MessageInput';
+import { AttachmentPreview } from './AttachmentPreview';
 
 interface ChatInterfaceProps {
   messages: Message[];
@@ -9,9 +10,21 @@ interface ChatInterfaceProps {
   onSendMessage: () => void;
   input: string;
   onInputChange: (value: string) => void;
+  attachment: Attachment | null;
+  onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveAttachment: () => void;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, isLoading, onSendMessage, input, onInputChange }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
+  messages, 
+  isLoading, 
+  onSendMessage, 
+  input, 
+  onInputChange,
+  attachment,
+  onFileSelect,
+  onRemoveAttachment
+}) => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,11 +54,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, isLoadin
       </div>
        <div className={mainContentClasses}>
            <div className="max-w-4xl mx-auto">
+                {attachment && (
+                  <AttachmentPreview 
+                    attachment={attachment} 
+                    onRemove={onRemoveAttachment} 
+                  />
+                )}
                 <MessageInput 
                     onSendMessage={onSendMessage} 
                     isLoading={isLoading}
                     value={input}
                     onChange={onInputChange}
+                    onFileSelect={onFileSelect}
+                    hasAttachment={!!attachment}
                 />
            </div>
         </div>

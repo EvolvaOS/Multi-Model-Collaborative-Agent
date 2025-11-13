@@ -1,7 +1,6 @@
-
 import React, { useMemo } from 'react';
-import { type Message, type ParsedPart } from '../types';
-import { SparklesIcon, ShieldCheckIcon, ClipboardListIcon, BrainIcon } from './icons';
+import { type Message, type ParsedPart, type Attachment } from '../types';
+import { SparklesIcon, ShieldCheckIcon, ClipboardListIcon, BrainIcon, DocumentIcon } from './icons';
 
 interface MessageProps {
   message: Message;
@@ -87,6 +86,22 @@ const PartCard: React.FC<{ part: ParsedPart }> = ({ part }) => {
   );
 };
 
+const AttachmentInMessage: React.FC<{ attachment: Attachment }> = ({ attachment }) => {
+  if (attachment.type === 'image') {
+    return <img src={attachment.url} alt={attachment.name} className="mt-2 rounded-lg max-w-xs max-h-48 object-cover" />;
+  }
+  if (attachment.type === 'video') {
+    return <video src={attachment.url} controls className="mt-2 rounded-lg max-w-xs max-h-48" />;
+  }
+  return (
+    <div className="mt-2 p-2 bg-blue-500 rounded-lg flex items-center gap-2">
+      <DocumentIcon className="h-6 w-6 text-white flex-shrink-0" />
+      <span className="text-white text-sm truncate">{attachment.name}</span>
+    </div>
+  );
+}
+
+
 export const MessageComponent: React.FC<MessageProps> = ({ message }) => {
   const isUser = message.role === 'user';
   
@@ -104,7 +119,10 @@ export const MessageComponent: React.FC<MessageProps> = ({ message }) => {
     <div className={`${containerClasses} max-w-4xl mx-auto w-full px-4`}>
       <div className={`p-3 max-w-2xl w-full ${bubbleClasses}`}>
         {isUser ? (
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          <div>
+            {message.attachment && <AttachmentInMessage attachment={message.attachment} />}
+            {message.content && <p className={`whitespace-pre-wrap ${message.attachment ? 'mt-2' : ''}`}>{message.content}</p>}
+          </div>
         ) : (
           <div className="space-y-3">
             {parsedContent.length > 0 ? (

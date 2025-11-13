@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ChatInterface } from './components/ChatInterface';
 import { MemorySidebar } from './components/MemorySidebar';
-import { type Message, type Memory } from './types';
+import { type Message, type Memory, type Attachment } from './types';
 import { getMockMemories, getAgentResponse } from './services/mmcaService';
 import { Bars3Icon } from './components/icons';
 
@@ -11,6 +11,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
 
   useEffect(() => {
     // Initial greeting and memory fetch
@@ -30,22 +31,25 @@ const App: React.FC = () => {
   }, []);
 
   const handleSendMessage = useCallback(async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !attachment) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
       content: input,
       timestamp: new Date().toISOString(),
+      attachment: attachment ? { ...attachment, file: undefined } : undefined,
     };
 
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     const currentInput = input;
+    const currentAttachment = attachment;
     setInput('');
+    setAttachment(null);
 
     try {
-      const agentResponseContent = await getAgentResponse(currentInput, memories);
+      const agentResponseContent = await getAgentResponse(currentInput, memories, currentAttachment);
       const agentMessage: Message = {
         id: `agent-${Date.now()}`,
         role: 'agent',
@@ -65,13 +69,38 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [input, memories]);
+  }, [input, memories, attachment]);
 
   const handleCiteMemory = useCallback((memory: Memory) => {
     const citationText = `[正在引用記憶：「${memory.title}」]\n`;
     setInput(prev => citationText + prev);
     setIsSidebarOpen(false);
   }, []);
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const url = e.target?.result as string;
+        let type: Attachment['type'] = 'other';
+        if (file.type.startsWith('image/')) {
+          type = 'image';
+        } else if (file.type.startsWith('video/')) {
+          type = 'video';
+        }
+        setAttachment({ name: file.name, type, url, file });
+      };
+      reader.readAsDataURL(file);
+    }
+     // Reset file input value to allow selecting the same file again
+    event.target.value = '';
+  };
+  
+  const handleRemoveAttachment = () => {
+    setAttachment(null);
+  };
+
 
   return (
     <div className="relative h-screen w-screen flex overflow-hidden bg-gray-900 font-sans">
@@ -93,13 +122,16 @@ const App: React.FC = () => {
             <h1 className="text-lg font-semibold text-gray-200 ml-2">MMCA Agent</h1>
         </header>
         
-        <main className="flex-1 overflow-y-auto pt-16 pb-24">
+        <main className="flex-1 overflow-y-auto pt-16 pb-36">
            <ChatInterface
             messages={messages}
             isLoading={isLoading}
             onSendMessage={handleSendMessage}
             input={input}
             onInputChange={setInput}
+            attachment={attachment}
+            onFileSelect={handleFileSelect}
+            onRemoveAttachment={handleRemoveAttachment}
           />
         </main>
       </div>

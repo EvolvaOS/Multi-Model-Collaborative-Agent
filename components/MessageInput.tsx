@@ -1,15 +1,18 @@
 import React, { useRef, useEffect } from 'react';
-import { PaperAirplaneIcon } from './icons';
+import { PaperAirplaneIcon, PaperClipIcon } from './icons';
 
 interface MessageInputProps {
   onSendMessage: () => void;
   isLoading: boolean;
   value: string;
   onChange: (value: string) => void;
+  onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  hasAttachment: boolean;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, value, onChange }) => {
+export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, value, onChange, onFileSelect, hasAttachment }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -22,7 +25,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoa
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (value.trim() && !isLoading) {
+    if ((value.trim() || hasAttachment) && !isLoading) {
       onSendMessage();
     }
   };
@@ -34,8 +37,28 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoa
     }
   };
 
+  const handleAttachmentClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-gray-800 p-2 rounded-xl border border-gray-700 focus-within:border-blue-500 transition-colors">
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={onFileSelect}
+        className="hidden" 
+        disabled={isLoading}
+      />
+      <button
+        type="button"
+        onClick={handleAttachmentClick}
+        disabled={isLoading}
+        className="p-2 rounded-lg text-gray-400 disabled:text-gray-600 hover:bg-gray-700 hover:text-white transition-colors focus:outline-none"
+        aria-label="Attach file"
+      >
+        <PaperClipIcon className="h-5 w-5" />
+      </button>
       <textarea
         ref={textareaRef}
         value={value}
@@ -48,7 +71,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoa
       />
       <button
         type="submit"
-        disabled={isLoading || !value.trim()}
+        disabled={isLoading || (!value.trim() && !hasAttachment)}
         className="p-2 rounded-lg bg-blue-600 text-white disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500"
         aria-label="Send message"
       >
