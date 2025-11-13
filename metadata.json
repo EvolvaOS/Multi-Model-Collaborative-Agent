@@ -1,0 +1,5 @@
+{
+  "name": "MMCA - Multi-Model Collaboration Agent",
+  "description": "A sophisticated chat interface that showcases the workflow of a Multi-Model Collaboration Agent (MMCA). It visually separates the outputs of different AI models ([A] Generator, [B] Verifier, [C] Extender) and the final integrated [Agent] response, providing a transparent and traceable user experience. The application also features a memory module to simulate context retrieval and persistence across conversations.",
+  "requestFramePermissions": []
+}
